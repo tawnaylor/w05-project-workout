@@ -9,7 +9,7 @@ const doc = {
     version: '1.0.0'
   },
   servers: [
-    { url: process.env.API_BASE_URL || 'http://localhost:3000', description: 'Configured API server' }
+    { url: process.env.API_BASE_URL || 'https://w05-project-workout.onrender.com', description: 'Configured API server' }
   ],
   components: {
     securitySchemes: {
