@@ -9,6 +9,22 @@ const swaggerFile = require('./swagger.json');
 const { initDb } = require('./db/connect');
 require('./config/passport');
 
+const swaggerCustomCss = `
+  .swagger-ui { background: #f4f7f1; color: #25372f; }
+  .swagger-ui .topbar { background: #183b30; border-bottom: 4px solid #a8cc62; }
+  .swagger-ui .topbar-wrapper .link { color: #f4f7f1; }
+  .swagger-ui .info .title { color: #183b30; }
+  .swagger-ui .info .description p { color: #43574c; }
+  .swagger-ui .scheme-container { background: #e6efe4; box-shadow: 0 1px 3px #183b3020; }
+  .swagger-ui .opblock-tag { color: #183b30; border-bottom-color: #c7d7c5; }
+  .swagger-ui .opblock.opblock-get { background: #eaf4ef; border-color: #278265; }
+  .swagger-ui .opblock.opblock-post { background: #f0f5e5; border-color: #799b3d; }
+  .swagger-ui .opblock.opblock-put { background: #fff3e8; border-color: #d78343; }
+  .swagger-ui .opblock.opblock-delete { background: #fff0ed; border-color: #d86d5a; }
+  .swagger-ui .btn.execute { background: #24765b; border-color: #24765b; color: #fff; }
+  .swagger-ui .btn.execute:hover { background: #185941; }
+`;
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -36,7 +52,7 @@ const start = async () => {
   }));
   app.use(passport.initialize());
   app.use(passport.session());
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile, { customCss: swaggerCustomCss }));
   app.use('/', require('./routes'));
   app.use((error, req, res, next) => {
     if (res.headersSent) return next(error);
