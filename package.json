@@ -1,0 +1,32 @@
+{
+  "name": "workoutquest-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A GitHub-authenticated workout tracking API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "npm run swagger",
+    "swagger": "node swagger.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "connect-mongo": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "mongodb": "^6.12.0",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "swagger-autogen": "^2.23.7"
+  }
+}

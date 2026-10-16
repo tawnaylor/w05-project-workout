@@ -1,0 +1,77 @@
+### Public health check
+GET http://localhost:3000/
+
+### Start GitHub OAuth in a browser first, then use the same session for writes
+GET http://localhost:3000/auth/github
+
+### Current signed-in player
+GET http://localhost:3000/auth/me
+
+### Workouts
+GET http://localhost:3000/workouts
+
+### Get a workout by id
+GET http://localhost:3000/workouts/PASTE_ID_HERE
+
+### Create workout (requires GitHub session)
+POST http://localhost:3000/workouts
+Content-Type: application/json
+
+{
+  "name": "Leg Day",
+  "type": "strength",
+  "difficulty": 7,
+  "durationMinutes": 50,
+  "xpReward": 220,
+  "exercises": [{ "name": "Squats", "sets": 4, "reps": 10 }]
+}
+
+### Update workout (requires GitHub session and ownership)
+PUT http://localhost:3000/workouts/PASTE_ID_HERE
+Content-Type: application/json
+
+{
+  "name": "Leg Day",
+  "type": "strength",
+  "difficulty": 8,
+  "durationMinutes": 55,
+  "xpReward": 250,
+  "exercises": [{ "name": "Squats", "sets": 5, "reps": 10 }],
+  "completed": true
+}
+
+### Delete workout (requires GitHub session and ownership)
+DELETE http://localhost:3000/workouts/PASTE_ID_HERE
+
+### Players
+GET http://localhost:3000/players
+
+### Get a player by id
+GET http://localhost:3000/players/PASTE_ID_HERE
+
+### Create player (requires GitHub session)
+POST http://localhost:3000/players
+Content-Type: application/json
+
+{
+  "username": "workoutfan",
+  "displayName": "Workout Fan",
+  "email": "workoutfan@example.com",
+  "totalXp": 0,
+  "level": 1
+}
+
+### Update player you created or your own OAuth profile
+PUT http://localhost:3000/players/PASTE_ID_HERE
+Content-Type: application/json
+
+{
+  "username": "workoutfan",
+  "displayName": "Workout Fan",
+  "email": "workoutfan@example.com",
+  "totalXp": 350,
+  "level": 3
+}
+
+### Delete player you created or your own OAuth profile
+DELETE http://localhost:3000/players/PASTE_ID_HERE

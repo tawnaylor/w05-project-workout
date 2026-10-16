@@ -1,0 +1,575 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "WorkoutQuest API",
+    "description": "Workout tracking and player progression API. Mutations require a GitHub-authenticated session.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Configured API server"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auth/github": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Start GitHub sign-in",
+        "description": "",
+        "responses": {
+          "302": {
+            "description": "Redirect to GitHub authorization"
+          },
+          "503": {
+            "description": "GitHub OAuth is not configured"
+          }
+        }
+      }
+    },
+    "/auth/github/callback": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Complete GitHub sign-in",
+        "description": "",
+        "responses": {
+          "302": {
+            "description": "Redirect to API documentation after sign-in"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sign out and destroy the current session",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get the signed-in player",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/workouts/": {
+      "get": {
+        "tags": [
+          "Workouts"
+        ],
+        "summary": "Get all workouts",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Workouts"
+        ],
+        "summary": "Create a workout for the signed-in player",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Invalid workout payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkoutInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workouts/{id}": {
+      "get": {
+        "tags": [
+          "Workouts"
+        ],
+        "summary": "Get a workout by MongoDB id",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid MongoDB id"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Workouts"
+        ],
+        "summary": "Replace a workout owned by the signed-in player",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid id or workout payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkoutInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Workouts"
+        ],
+        "summary": "Delete a workout owned by the signed-in player",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid MongoDB id"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
+      }
+    },
+    "/players/": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Get all player profiles",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Create a player profile",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Invalid player payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/players/{id}": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Get a player by MongoDB id",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid MongoDB id"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Replace a player profile you own",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid id or player payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Delete a player profile you own",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid MongoDB id"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "workoutquest.sid"
+      }
+    },
+    "schemas": {
+      "WorkoutInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "difficulty",
+          "durationMinutes",
+          "xpReward"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Push Day"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "strength",
+              "cardio",
+              "mobility"
+            ],
+            "example": "strength"
+          },
+          "difficulty": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "example": 5
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "example": 45
+          },
+          "xpReward": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 150
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "sets",
+                "reps"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Push-ups"
+                },
+                "sets": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "example": 3
+                },
+                "reps": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "example": 12
+                }
+              }
+            }
+          },
+          "completed": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "PlayerInput": {
+        "type": "object",
+        "required": [
+          "username",
+          "displayName",
+          "email"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 30,
+            "example": "tawnaylor"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Taw"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "taw@example.com"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "totalXp": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "example": 0
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "example": 1
+          }
+        }
+      }
+    }
+  }
+}
