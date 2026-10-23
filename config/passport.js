@@ -2,8 +2,12 @@ const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const { ObjectId } = require('mongodb');
 const { getDb } = require('../db/connect');
+const { getMissingOAuthSettings } = require('./oauth');
 
-if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET && process.env.GITHUB_CALLBACK_URL) {
+const missingOAuthSettings = getMissingOAuthSettings();
+if (missingOAuthSettings.length > 0) {
+  console.warn(`GitHub OAuth is disabled. Missing environment variables: ${missingOAuthSettings.join(', ')}. Configure them and restart the service.`);
+} else {
   passport.use(new GitHubStrategy(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
