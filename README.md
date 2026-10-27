@@ -1,49 +1,92 @@
-# WorkoutQuest API
+# WorkoutQuest
 
-A MongoDB-backed workout tracker with GitHub OAuth, player progression, and interactive OpenAPI documentation.
+A workout tracker where finishing a workout earns XP and levels you up. It is a TypeScript Node project with a GraphQL API, MongoDB storage, GitHub OAuth, and a web UI served by the same server.
 
-## Setup
+- **App:** `/`
+- **API docs:** `/docs` (guide, live schema reference, and a console for trying calls)
+- **GraphQL endpoint:** `POST /graphql` (opens an interactive explorer when visited in a browser)
+
+## Stack
+
+| Piece | Choice |
+| --- | --- |
+| Language | TypeScript (strict) for the server, tests, and the browser code |
+| API | GraphQL with Apollo Server 4 on Express |
+| Database | MongoDB (`players` and `workouts` collections) |
+| Auth | GitHub OAuth through Passport, sessions stored in MongoDB |
+| Validation | zod schemas on every mutation input and filter |
+| UI | Static pages in `public/`, behavior in `src/client/*.ts` compiled to `public/js` |
+
+## Data model
+
+`players` (9 fields, plus `_id`): `username`, `displayName`, `email`, `githubId`, `avatarUrl`, `totalXp`, `level`, `createdAt`, `createdBy`.
+
+`workouts` (9 fields, plus `_id`): `name`, `type` (strength, cardio, mobility), `difficulty` (1-10), `durationMinutes`, `xpReward`, `exercises` (name, sets, reps), `completed`, `completedAt`, `playerId`.
+
+Level is `floor(totalXp / 500) + 1`. XP changes only by completing a workout, so players cannot edit their own XP.
+
+## Operations
+
+Reads are public. Every mutation needs a signed-in player.
+
+| HTTP idea | Workouts | Players |
+| --- | --- | --- |
+| GET | `workouts`, `workout(id)` | `players`, `player(id)`, `me` |
+| POST | `createWorkout` | `createPlayer` |
+| PUT | `updateWorkout` (replaces all fields) | `updatePlayer` (replaces all fields) |
+| DELETE | `deleteWorkout` | `deletePlayer` (also removes that player's workouts) |
+
+`completeWorkout(id)` marks one of your workouts done and awards its XP once.
+
+Validation failures return `BAD_USER_INPUT` with a `field` and `message` for each problem. Other codes are `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, and `CONFLICT`. Full details and examples are on the `/docs` page.
+
+## Run it locally
 
 1. Install Node.js 20 or newer.
-2. Copy `.env.example` to `.env` and fill in the MongoDB connection string and a long random `SESSION_SECRET`.
-3. Install dependencies with `npm install`.
-4. Generate the API spec with `npm run build` (or `npm run swagger`).
-5. Start the API with `npm run dev`.
+2. Copy `.env.example` to `.env` and fill in `MONGODB_URI` and a long random `SESSION_SECRET`.
+3. Create a GitHub OAuth App (Settings, Developer settings, OAuth Apps) with the callback URL `http://localhost:3000/auth/github/callback`. Put its client ID and secret in `.env`.
+4. Run `npm install`, then `npm run build`, then `npm run dev` (or `npm start` to run the built output).
 
-The API listens on `http://localhost:3000`; Swagger UI is at `/api-docs`. MongoDB collections and unique indexes are initialized when the server connects.
-
-## GitHub OAuth
-
-Create a GitHub OAuth App with the callback URL `http://localhost:3000/auth/github/callback`. Add its client ID and secret to `.env`. For Render, configure a separate callback URL using your deployed service's HTTPS address and set `GITHUB_CALLBACK_URL` to it. The OAuth client ID and secret, `SESSION_SECRET`, `MONGODB_URI`, and `DB_NAME` must also be configured in Render.
-
-Open `/auth/github` in a browser and authorize the app. The callback creates or finds the player profile and starts a MongoDB-backed session. GET endpoints are public; POST, PUT, and DELETE require this session. Workout updates and deletes are limited to the signed-in player's workouts. Player updates and deletes are limited to the signed-in player's profile or profiles they created.
-
-## Endpoints
-
-| Resource | Operations |
+| Script | What it does |
 | --- | --- |
-| `/workouts` | GET all, GET by id, POST, PUT by id, DELETE by id |
-| `/players` | GET all, GET by id, POST, PUT by id, DELETE by id |
-| `/auth` | GitHub sign-in, callback, current player, sign-out |
+| `npm run dev` | Runs the server with auto-reload through `tsx` |
+| `npm run build` | Compiles the server to `dist/` and the browser code to `public/js/` |
+| `npm start` | Runs `dist/server.js` |
+| `npm run typecheck` | Type-checks server and client without emitting files |
+| `npm test` | Runs the tests |
 
-Workout documents contain name, type, difficulty, duration, XP reward, exercises, completion state, completion timestamp, and player ID. Player documents contain username, display name, email, GitHub ID, avatar, XP, level, creation timestamp, and creator ID.
-
-Payload validation returns HTTP 400 with field errors. Missing resources return 404, duplicate player names/emails return 409, and unauthenticated writes return 401. Public player reads omit email addresses and GitHub provider IDs. Swagger UI documents the request schemas and session requirement. `routes.rest` includes example calls.
+While developing, rebuild the browser code with `npx tsc -p tsconfig.client.json --watch`.
 
 ## Deploy to Render
 
-Create a Render Web Service connected to the GitHub repository. Use `npm install` as the build command and `npm start` as the start command. Set `MONGODB_URI`, `DB_NAME`, `SESSION_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`, and `NODE_ENV=production`. Do not set `PORT`; Render supplies it. Add the deployed callback URL to the GitHub OAuth App. In PowerShell, set `$env:API_BASE_URL='https://your-service.onrender.com'` and run `npm run swagger` before committing the deployment spec.
+1. Create a Web Service from this repository. `render.yaml` holds the settings, or enter them by hand:
+   - Build command: `npm install --include=dev && npm run build`
+   - Start command: `npm start`
+   - Health check path: `/health`
+2. Set these environment variables: `MONGODB_URI`, `DB_NAME`, `SESSION_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`, `NODE_ENV=production`, and `NODE_VERSION=22`. Do not set `PORT`; Render supplies it.
+3. Set `GITHUB_CALLBACK_URL` to `https://<your-service>.onrender.com/auth/github/callback`, and use the same URL as the **Authorization callback URL** in a GitHub OAuth App. Use a separate OAuth App for local development.
+4. In MongoDB Atlas, allow Render to connect (Network Access, then add `0.0.0.0/0` for a class project).
+5. Redeploy. Open `/health`, then `/docs`, then sign in from the app.
 
-The API is externally reachable once deployed. GET routes are public; write requests need an authenticated session cookie. Never commit `.env` or expose OAuth secrets in a video.
+The API can be called from other origins. The session cookie is `SameSite=Lax`, so authenticated calls work from the app and the `/docs` console on the same origin, while public queries work from anywhere.
 
-### Troubleshoot GitHub sign-in on Render
+### Troubleshooting sign-in
 
-A `503` from `/auth/github` or `/auth/github/callback` means OAuth configuration is incomplete. The response's `missingVariables` array and the startup warning list missing or blank environment variable names, never their values. Public reads and Swagger UI remain available; writes still require a signed-in session.
+A `503` from `/auth/github` means OAuth settings are missing. The response lists the missing variable names (never values). Add them in Render's Environment settings and redeploy, because Passport registers its strategy at startup. If GitHub rejects the callback, check that `GITHUB_CALLBACK_URL` and the OAuth App's callback URL match exactly. Never paste client secrets into chat, screenshots, or recordings.
 
-1. In the Render service's **Environment** settings, add nonblank values for `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` from your GitHub OAuth App. Your local `.env` is ignored by Git and is not uploaded to Render.
-2. Set `GITHUB_CALLBACK_URL` to `https://w05-project-workout.onrender.com/auth/github/callback`. Set the GitHub OAuth App's **Authorization callback URL** to the exact same URL. Use a separate OAuth App for local development so its localhost callback does not conflict with Render.
-3. Save the settings and restart/redeploy the service. Passport registers the GitHub strategy at startup, so a running process must restart after changing these settings.
-4. Open `https://w05-project-workout.onrender.com/auth/github`. It should redirect to GitHub rather than return `503`. After authorizing, `/auth/me` should return `200` in the same browser.
-5. Open `/api-docs` on that same Render origin to test writes with the session cookie. Create a disposable workout while signed in before trying PUT/DELETE; existing workouts owned by another player return `404`.
+## Project layout
 
-If GitHub rejects the callback or credentials after the redirect, recheck the OAuth App and Render values; the missing-variable check verifies presence, not validity. Never paste client secrets into chat, API requests, screenshots, or recordings.
+```
+src/
+  server.ts            starts the database and the HTTP server
+  app.ts               Express wiring: sessions, auth routes, /graphql, static files
+  auth.ts              GitHub strategy and /auth routes
+  config.ts            environment handling
+  db.ts                MongoDB connection, indexes, typed collections
+  errors.ts            error codes, input parsing, central error formatting
+  validation.ts        zod schemas
+  graphql/             schema, resolvers, context, Apollo setup
+  client/              browser TypeScript for the app and docs page
+public/                HTML and CSS
+test/                  unit tests (validation, OAuth guard, GraphQL errors)
+```
